@@ -1,7 +1,7 @@
 import java.util.Scanner;
 import java.util.Random;
 
-class Main {
+public class Main {
 
     // ===================== SCREEN CLEAR =====================
     public static void clearScreen() {
@@ -11,6 +11,17 @@ class Main {
         } catch (Exception e) {
             for (int i = 0; i < 50; i++) System.out.println();
         }
+    }
+
+    // ===================== GENERATE 6-DIGIT ALPHANUMERIC OTP =====================
+    public static String generateAlphaNumericOTP() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder otp = new StringBuilder();
+        Random r = new Random();
+        for (int i = 0; i < 6; i++) {
+            otp.append(chars.charAt(r.nextInt(chars.length())));
+        }
+        return otp.toString();
     }
 
     // ===================== BASE ACCOUNT CLASS =====================
@@ -40,7 +51,8 @@ class Main {
             if (amount <= 0) {
                 System.out.println("Invalid withdrawal amount!");
                 return false;
-            } else if (amount > balance) {
+            }
+            if (amount > balance) {
                 System.out.println("Insufficient balance!");
                 return false;
             }
@@ -129,25 +141,27 @@ class Main {
                 System.out.println("Invalid Email Format!");
             }
 
-            // OTP Verification (3 attempts)
-            Random r = new Random();
+            // ===== ALPHANUMERIC OTP VERIFICATION (3 ATTEMPTS) CASE-SENSITIVE =====
             int otpAttempts = 0;
 
             while (otpAttempts < 3) {
-                int otp = r.nextInt(9000) + 1000;
+
+                String otp = Main.generateAlphaNumericOTP();
                 System.out.println("Your OTP: " + otp);
 
                 System.out.print("Enter OTP: ");
-                int enter = sc.nextInt(); sc.nextLine();
+                String enteredOtp = sc.nextLine();  // case-sensitive
 
-                if (enter == otp) {
-                    System.out.println("OTP Verified!");
+                if (otp.equals(enteredOtp)) {
+                    System.out.println("OTP Verified Successfully!");
                     break;
                 } else {
                     otpAttempts++;
-                    System.out.println("Incorrect OTP! Attempts left: " + (3 - otpAttempts));
+                    System.out.println("Incorrect OTP!");
+                    System.out.println("Attempts left: " + (3 - otpAttempts));
+
                     if (otpAttempts == 3) {
-                        System.out.println("Signup failed due to OTP attempts!");
+                        System.out.println("OTP attempts completed! Redirecting to main menu...");
                         return;
                     }
                 }
@@ -199,7 +213,7 @@ class Main {
             System.out.println("Signup Successful! Please login.");
         }
 
-        // ADDING BANK ACCOUNT
+        // ADDING BANK ACCOUNT  
         public void createBankAccount(Scanner sc, User user) {
 
             clearScreen();
@@ -210,67 +224,70 @@ class Main {
             System.out.print("Choose type: ");
             int type = sc.nextInt(); sc.nextLine();
 
-            // Nickname Validation
+            // NICKNAME VALIDATION
             String accName = "";
-            boolean validName = false;
+            boolean nicknameOK = false;
 
-            while (!validName) {
+            while (!nicknameOK) {
                 System.out.print("Enter Account Nickname: ");
                 accName = sc.nextLine();
 
-                boolean nameExists = false;
+                boolean nicknameExists = false;
 
-                // Check nickname exists
                 for (int i = 0; i < user.getAccCount(); i++) {
                     if (user.getAccounts()[i].accountName.equalsIgnoreCase(accName)) {
-                        nameExists = true;
+                        nicknameExists = true;
                         break;
                     }
                 }
 
-                if (nameExists) {
-                    System.out.println("Nickname already used! Enter a different nickname.");
-                } else validName = true;
+                if (nicknameExists) {
+                    System.out.println("Nickname already exists! Enter a different nickname.");
+                } else nicknameOK = true;
             }
 
-            // Account Number Validation
-            long accNum;
-            boolean validNum = false;
+            // ACCOUNT NUMBER VALIDATION + RECONFIRMATION
+            long accNum = 0;
+            boolean accountOK = false;
 
-            while (!validNum) {
+            while (!accountOK) {
+
                 System.out.print("Enter Account Number: ");
-                accNum = sc.nextLong(); sc.nextLine();
+                long firstEntry = sc.nextLong(); sc.nextLine();
 
-                boolean numExists = false;
+                System.out.print("Re-enter Account Number: ");
+                long secondEntry = sc.nextLong(); sc.nextLine();
+
+                if (firstEntry != secondEntry) {
+                    System.out.println("Account numbers do NOT match! Enter again.");
+                    continue;
+                }
+
+                accNum = firstEntry;  // confirmed
+
+                boolean numberExists = false;
                 boolean exactMatch = false;
 
                 for (int i = 0; i < user.getAccCount(); i++) {
                     BankAccount a = user.getAccounts()[i];
 
                     if (a.getAccountNumber() == accNum) {
-                        numExists = true;
 
                         if (a.accountName.equalsIgnoreCase(accName))
-                            exactMatch = true;
+                            exactMatch = true; // SAME nickname + SAME number
+
+                        numberExists = true;  // account number exists
                     }
                 }
 
                 if (exactMatch) {
                     System.out.println("This account already exists! (Same nickname + number)");
                 }
-                else if (numExists) {
-                    System.out.println("Account number already exists! Enter a different number.");
+                else if (numberExists) {
+                    System.out.println("Account number already exists! Enter a different account number.");
                 }
-                else {
-                    // Both unique
-                    validNum = true;
-                    break;
-                }
+                else accountOK = true;
             }
-
-            // Read account number again after validation
-            System.out.print("Re-enter Account Number: ");
-            accNum = sc.nextLong(); sc.nextLine();
 
             // PHONE VERIFICATION
             String phone = "";
@@ -284,6 +301,7 @@ class Main {
             // OTP Verification (5 attempts)
             Random r = new Random();
             int attempts = 0;
+
             while (attempts < 5) {
                 int otp = r.nextInt(9000) + 1000;
                 System.out.println("Phone OTP: " + otp);
@@ -304,7 +322,7 @@ class Main {
                 }
             }
 
-            // CREATE ACCOUNT
+            // CREATE ACCOUNT OBJECT
             BankAccount acc;
             if (type == 1) acc = new SavingsAccount(accName, accNum);
             else if (type == 2) acc = new CurrentAccount(accName, accNum);
@@ -313,12 +331,13 @@ class Main {
                 return;
             }
 
-            // RANDOM BALANCE
-            double initial = 500 + r.nextInt(9501);
-            acc.deposit(initial);
-            System.out.println("Initial Balance Added: ₹" + initial);
+            // RANDOM INITIAL BALANCE (NO PRINTING)
+            Random rand = new Random();
+            acc.balance = 500 + rand.nextInt(9501);
 
+            // ADD ACCOUNT
             user.addAccount(acc);
+
             System.out.println("Account Created Successfully!");
         }
 
@@ -460,7 +479,12 @@ class Main {
             }
             else if (ch == 2) {
                 System.out.print("Enter amount: ");
-                acc.withdraw(sc.nextDouble());
+                double amount = sc.nextDouble();
+
+                if (acc.withdraw(amount)) {
+                    System.out.println("Amount Successfully Withdrawn!");
+                    System.out.println("Remaining Balance: ₹" + acc.getBalance());
+                }
             }
             else if (ch == 3) {
                 System.out.println("Balance: ₹" + acc.getBalance());
