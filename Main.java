@@ -107,8 +107,8 @@ public class Main {
         public BankAccount[] getAccounts() { return accounts; }
 
         public BankAccount getAccountByNumber(long num) {
-            for (int i = 0; i < accCount; i++)
-                if (accounts[i].getAccountNumber() == num) return accounts[i];
+            for (int j = 0; j < accCount; j++)
+                if (accounts[j].getAccountNumber() == num) return accounts[j];
             return null;
         }
     }
